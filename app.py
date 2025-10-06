@@ -7,9 +7,9 @@ from src.pipeline.diabetes_predict_pipeline import Customdata
 from src.pipeline.diabetes_predict_pipeline import Predictpipeline
 from src.pipeline.cad_predict_pipeline import Cad_customdata
 from src.pipeline.cad_predict_pipeline import Cad_predictpipeline
+from langchain_groq import ChatGroq
 
-# age,sex,chest_pain_type,resting_bp_s,cholesterol,fasting_blood_sugar,resting_ecg,max_heart_rate,exercise_angina,oldpeak,ST_slope,target
-
+print("All the files got imported")
 application=Flask(__name__)
 app=application
 
@@ -65,11 +65,40 @@ def prediction():
          }
          for i in range(len(lst)):
             if lst[i]==element:
-                  return names[i]       
+                  return names[i]
+      
+      gender = request.form.get('Gender')
+      age = request.form.get('AGE')
+      urea = request.form.get('Urea')
+      cr = request.form.get('Cr')
+      chol = request.form.get('Chol')
+      tg = request.form.get('TG')
+      hdl = request.form.get('HDL')
+      ldl = request.form.get('LDL')
+      vldl = request.form.get('VLDL')
+      bmi = request.form.get('BMI')
+            
+            
 
- 
+      rag_query = (
+         f"My gender is {gender}, age is {age}. "
+         f"Urea is {urea}, creatinine is {cr}. "
+         f"Cholesterol is {chol}, triglycerides are {tg}, HDL is {hdl}, LDL is {ldl}, VLDL is {vldl}. "
+         f"BMI is {bmi}. Explain these terms simply in detail and provide practical steps to control or reduce diabetes risk."
+      )
 
-      return render_template('diabetes.html',val1=largest_element(result_lst)*100,val2=place(result_lst,largest))
+      llm=ChatGroq(groq_api_key="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",model_name="gemma2-9b-it",temperature=0.1,max_tokens=1024)
+
+      prompt=f"""Use the following context to answer the question concisely.
+            
+            Question: {rag_query}
+
+            Answer:"""
+
+      response_text=llm.invoke(prompt)
+
+
+      return render_template('diabetes.html',response=response_text,val1=largest_element(result_lst)*100,val2=place(result_lst,largest))
 
 @app.route('/predict_cad',methods=['GET','POST'])
 def pred():
@@ -120,11 +149,41 @@ def pred():
       r,index=largest(result_pro)
       result=round(r, 2)
       ind=name[index]       
-                        
+      
+      age=request.form.get('age'),
+      sex=request.form.get('sex'),
+      chest_pain_type=request.form.get('chest_pain_type'),
+      resting_bp_s=request.form.get('resting_bp_s'),
+      cholesterol=request.form.get('cholesterol'),
+      fasting_blood_sugar=request.form.get('fasting_blood_sugar'),
+      resting_ecg=request.form.get('resting_ecg'),
+      max_heart_rate=request.form.get('max_heart_rate'),
+      exercise_angina=request.form.get('exercise_angina'),
+      oldpeak=request.form.get('oldpeak'),
+      ST_slope=request.form.get('ST_slope')
+
+      cad_query = (
+         f"My age is {age}, sex is {sex}. "
+         f"My chest pain type is {chest_pain_type}. "
+         f"My resting systolic BP is {resting_bp_s} mmHg. "
+         f"My cholesterol is {cholesterol} mg/dL, fasting blood sugar flag is {fasting_blood_sugar}, "
+         f"resting ECG is {resting_ecg}, max heart rate is {max_heart_rate} bpm, exercise-induced angina is {exercise_angina}. "
+         f"Oldpeak is {oldpeak} and ST slope is {ST_slope}. "
+         f"Explain these terms simply in detail and tell practical steps to reduce CAD risk."
+      )
+      llm=ChatGroq(groq_api_key="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",model_name="gemma2-9b-it",temperature=0.1,max_tokens=1024)
+
+      prompt=f"""Use the following context to answer the question concisely.
+               
+               Question: {cad_query}
+
+               Answer:"""
+
+      response_text=llm.invoke(prompt)              
     
  
 
-      return render_template('cad.html',result=result*100,index=ind)
+      return render_template('cad.html',result=result*100,index=ind,response=response_text)
 
 if __name__=="__main__":
     app.run(host='0.0.0.0',debug=True)   
