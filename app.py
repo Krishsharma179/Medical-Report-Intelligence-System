@@ -1,3 +1,4 @@
+import os 
 from flask import Flask,render_template,request
 import numpy as np
 import pandas as pd
@@ -8,8 +9,10 @@ from src.pipeline.diabetes_predict_pipeline import Predictpipeline
 from src.pipeline.cad_predict_pipeline import Cad_customdata
 from src.pipeline.cad_predict_pipeline import Cad_predictpipeline
 from langchain_groq import ChatGroq
+from dotenv import load_dotenv
+load_dotenv()
 
-print("All the files got imported")
+
 application=Flask(__name__)
 app=application
 
@@ -78,7 +81,7 @@ def prediction():
       vldl = request.form.get('VLDL')
       bmi = request.form.get('BMI')
             
-            
+      groq_api_key = os.getenv("GROQ_API_KEY")      
 
       rag_query = (
          f"My gender is {gender}, age is {age}. "
@@ -87,7 +90,7 @@ def prediction():
          f"BMI is {bmi}. Explain these terms simply in detail and provide practical steps to control or reduce diabetes risk."
       )
 
-      llm=ChatGroq(groq_api_key="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",model_name="gemma2-9b-it",temperature=0.1,max_tokens=1024)
+      llm=ChatGroq(groq_api_key=groq_api_key,model_name="llama-3.1-8b-instant",temperature=0.1,max_tokens=1024)
 
       prompt=f"""Use the following context to answer the question concisely.
             
@@ -98,7 +101,7 @@ def prediction():
       response_text=llm.invoke(prompt)
 
 
-      return render_template('diabetes.html',response=response_text,val1=largest_element(result_lst)*100,val2=place(result_lst,largest))
+      return render_template('diabetes.html',response=response_text.content,val1=largest_element(result_lst)*100,val2=place(result_lst,largest))
 
 @app.route('/predict_cad',methods=['GET','POST'])
 def pred():
@@ -171,7 +174,8 @@ def pred():
          f"Oldpeak is {oldpeak} and ST slope is {ST_slope}. "
          f"Explain these terms simply in detail and tell practical steps to reduce CAD risk."
       )
-      llm=ChatGroq(groq_api_key="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",model_name="gemma2-9b-it",temperature=0.1,max_tokens=1024)
+      groq_api_key = os.getenv("GROQ_API_KEY")
+      llm=ChatGroq(groq_api_key=groq_api_key,model_name="llama-3.1-8b-instant",temperature=0.1,max_tokens=1024)
 
       prompt=f"""Use the following context to answer the question concisely.
                
@@ -183,7 +187,7 @@ def pred():
     
  
 
-      return render_template('cad.html',result=result*100,index=ind,response=response_text)
+      return render_template('cad.html',result=result*100,index=ind,response=response_text.content)
 
 if __name__=="__main__":
     app.run(host='0.0.0.0',debug=True)   
